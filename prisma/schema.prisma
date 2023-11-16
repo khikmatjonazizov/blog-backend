@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @unique @default(autoincrement())
+
+  email String @unique
+  hash  String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  first_name String
+  last_name  String
+
+  blogs    Blog[]
+  comments Comment[]
+  likes    Like[]
+
+  @@map("users")
+}
+
+model Blog {
+  id Int @unique @default(autoincrement())
+
+  title   String
+  content String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  comments Comment[]
+  likes    Like[]
+
+  @@map("blogs")
+}
+
+model Comment {
+  id Int @unique @default(autoincrement())
+
+  content String
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  blog_id Int
+  blog    Blog @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+
+  likes Like[]
+
+  @@map("comments")
+}
+
+enum LikeableToOptions {
+  blog
+  comment
+}
+
+model Like {
+  id Int @unique @default(autoincrement())
+
+  likable_to LikeableToOptions
+  likable_id Int
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id])
+
+  blog_id Int? // Опционально, может быть null, если это лайк комментария
+  blog    Blog? @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+
+  comment_id Int? // Опционально, может быть null, если это лайк блога
+  comment    Comment? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+
+  @@map("likes")
+}
